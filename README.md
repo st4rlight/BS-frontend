@@ -1,21 +1,28 @@
-# frontend
+## 后端地址
+https://github.com/st4rlight/BS-backend
 
-> The frontend of my BS project
+## 技术栈
+Vue全家桶 （ Vue.js + Vue-Router + Vuex +　Axios ），使用Vue-Cli构建
 
-## Build Setup
+Element-UI
 
-``` bash
-# install dependencies
-npm install
+V-Charts
 
-# serve with hot reload at localhost:8080
+## 第三方接口
+有道翻译API http://fanyi.youdao.com/openapi
+
+金山词霸API http://open.iciba.com/?c=api
+
+## 运行
+
+### 1. 运行后端
+详见后端说明
+
+### 2. 安装依赖并运行
+```javascript
+npm i
 npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+### 3. 访问网页
+打开浏览器访问`localhost:8888`即可看到页面
