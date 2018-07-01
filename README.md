@@ -8,6 +8,11 @@ Element-UI
 
 V-Charts
 
+## 第三方接口
+有道翻译API http://fanyi.youdao.com/openapi
+
+金山词霸API http://open.iciba.com/?c=api
+
 ## 运行
 
 ### 1. 运行后端
