@@ -74,7 +74,6 @@
         }
       },
       beforeMount(){
-        validate_login(this);
         Axios.get(getApiPath('/home/everyday'))
           .then( (res) => {
               if( res.status === 200){
