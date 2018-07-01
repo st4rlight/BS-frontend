@@ -47,13 +47,21 @@
         </el-menu-item>
 
 
+
+      <el-popover
+        placement="bottom"
+        width="400"
+        trigger="focus">
+          <span v-html="dictHtml"></span>
           <el-input style="display: inline-block; width: 150px; margin: 10px 0; padding-right: 200px"
             placeholder="快速查单词"
             prefix-icon="el-icon-search"
             v-model="input"
+            slot="reference"
             @keyup.native.enter="getDictHtml"
           >
           </el-input>
+      </el-popover>
 
 
         <el-menu-item index="/log_reg/login" v-if=" !getIsLogin" style="position: absolute; right: 110px;" id="login">
@@ -73,10 +81,10 @@
              {{ getAccount }}<i class="el-icon-arrow-down el-icon--right"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item>修改资料&nbsp;&nbsp;&nbsp;&nbsp;</el-dropdown-item>
-              <el-dropdown-item>用户设置</el-dropdown-item>
-              <el-dropdown-item disabled>移动端开发中</el-dropdown-item>
-              <el-dropdown-item divided command="logout">退出登陆</el-dropdown-item>
+              <el-dropdown-item disabled>修改资料(开发中)</el-dropdown-item>
+              <el-dropdown-item disabled>用户设置(开发中)</el-dropdown-item>
+              <el-dropdown-item disabled>移动端(开发中)</el-dropdown-item>
+              <el-dropdown-item divided command="logout">_ _退出登陆_ _</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </el-menu-item>
@@ -102,7 +110,8 @@
       return {
         activeIndex: '1',
         activeIndex2: '1',
-        input: ''
+        input: '',
+        dictHtml: ''
       };
     },
     methods: {
@@ -116,7 +125,7 @@
             type: 'success',
             duration: 1500,
             message: '注销成功，下次见~'
-          })
+          });
 
           this.$router.push('/log_reg/login');
 
@@ -125,9 +134,10 @@
       getDictHtml(){
         Axios.get(getApiPath('/recite/getHtml/' + this.input))
           .then( (res) => {
-            this.$alert( res.data['rawHtml'], '有道词典', {
-              dangerouslyUseHTMLString: true
-            });
+            this.dictHtml = res.data['rawHtml'];
+            // this.$alert( res.data['rawHtml'], '有道词典', {
+            //   dangerouslyUseHTMLString: true
+            // });
           })
           .catch( (err) => {
             this.$message({

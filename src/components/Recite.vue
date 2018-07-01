@@ -478,11 +478,12 @@
               if( res.status === 200 ){
                 this.wordList = res.data['wordList'];
                 this.current_index = 0;
-                this.loading = false;
 
                 this.getPh();
                 this.getFavorited();
                 this.start_recite = true;
+                this.loading = false;
+
 
               } else{
                 throw new Error();
@@ -510,11 +511,12 @@
                 this.wordList = res.data['wordList'];
 
                 this.current_index = 0;
-                this.loading = false;
 
                 this.getPh();
                 this.getFavorited();
                 this.start_recite = true;
+                this.loading = false;
+
 
               } else{
                 throw new Error();

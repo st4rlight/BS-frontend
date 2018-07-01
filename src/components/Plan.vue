@@ -274,8 +274,8 @@
       handleEdit: function (index, row) { //编辑数据
         this.edit = true;
         this.editIndex = index;
-        this.backupForm = row;
-        this.form = row;
+        this.backupForm = JSON.parse(JSON.stringify(row));
+        this.form = JSON.parse(JSON.stringify(row));
         this.dialogFormVisible = true;
       },
       handleCancle(){

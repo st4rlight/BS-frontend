@@ -4,7 +4,16 @@
 
       <!--选择复习计划-->
       <template v-if=" !start_review ">
-          <div class="my-class">
+        <div class="card">
+          <div class="header">
+            <h1> {{ remain }} </h1>
+          </div>
+          <div class="container">
+            <p>需要复习的单词数</p>
+          </div>
+        </div>​
+
+        <div class="my-class">
             <p>选择一个计划开始复习吧~</p>
             <el-select v-model="plan_id" placeholder="选择计划本" style="display: block; maring-top: 20px" @change="handleChange">
               <el-option
@@ -49,14 +58,14 @@
           </div>
 
           <!--单词意思-->
-          <div style="height: 260px" v-if="true">
+          <div style="height: 260px" v-if=" !show_circle">
             <div style="float: top; position: relative; top: 45%;">
               <span style="font-size: 2em">{{ wordList[current_index]['meaning'] }} </span>
             </div>
           </div>
 
           <!--转圈圈-->
-          <div style="height: 260px" v-if="false">
+          <div style="height: 260px" v-if="show_circle">
             <el-progress
               :show-text="false"
               style="margin: auto 0; top: 20%; zoom: 1.2"
@@ -65,16 +74,14 @@
             </el-progress>
           </div>
 
-          <!--<el-button type="success" icon="el-icon-search" @click="handleClick"></el-button>-->
-
           <!--按钮-->
           <div class="clearfix" style="margin-top: 20px">
-            <template v-if="true">
+            <template v-if=" !show_circle ">
               <el-button type="info" style="width: 100%" @click="handleNext(false)">下一个</el-button>
             </template>
             <template v-else>
-              <el-button type="primary" plain style="width: 45%; display: inline-block">认识</el-button>
-              <el-button type="info" plain style="width: 45%; display: inline-block">不认识</el-button>
+              <el-button type="primary" plain style="width: 45%; display: inline-block" @click="handleNext(false)">认识</el-button>
+              <el-button type="info" plain style="width: 45%; display: inline-block" @click="handleDontKnow">不认识</el-button>
             </template>
           </div>
 
@@ -97,7 +104,7 @@
           </div>
           <br /><br /><br /><br />
           <p style="font-size: 2em">恭喜，复习完成~</p>
-          <el-button type="primary" style="width: 200px" @click="finish_recite">完成</el-button>
+          <el-button type="primary" style="width: 200px" @click="finish_review">完成</el-button>
         </div>
       </template>
 
@@ -134,7 +141,11 @@
         ph_am: '',
         ph_en_mp3: null,
         ph_am_mp3: null,
-        should_play: false
+        should_play: false,
+
+        show_circle: true,
+        timer: null,
+        remain: 0
       }
     },
     beforeMount(){
@@ -157,41 +168,114 @@
         });
     },
     methods: {
-      handleClick(){
-        var timer = setInterval(() => {
+      handleCircle(){
+        this.testNum = 0;
+        this.timer = setInterval(() => {
           this.testNum += 1;
           if(this.testNum === 100) {
-            clearTimeout(timer);
+            clearTimeout(this.timer);
+            this.show_circle = false;
+            this.should_play = false;
+            this.testNum = 0;
           }
         }, 50);
       },
+
       handleChange(plan_id){
         for( let item of this.tableData ){
           if( item.plan_id = plan_id ){
             this.plan = item;
-            return;
           }
         }
-      },
-      startReview(){
-        this.loading = true;
-        const info = {
-          progress: this.plan.progress,
-               num: 20,
-           collect: this.plan.collect
+
+        var now = new Date();
+        var info = {
+            progress: this.plan.progress,
+             collect: this.plan.collect,
+             account: localStorage.getItem('account'),
+          collect_id: this.plan.collect_id,
+                date: moment(new Date( now.getTime() - 24*60*60*1000*3 ) ).format('YYYY-MM-DD')
         };
 
-        Axios.post(getApiPath('/recite/recite_plan'), info)
+        //获取总共该复习的单词数
+        Axios.post( getApiPath('/review/need_review_num'), info)
+          .then( (res) => {
+            if( res.status === 200){
+                var total = res.data['num'];
+
+                info = {
+                  user_id: localStorage.getItem('user_id'),
+                  plan_id: this.plan.plan_id,
+                     date: moment(new Date()).format('YYYY-MM-DD')
+                };
+
+                Axios.post(getApiPath('/review/review_today'), info)
+                  .then( (res) => {
+                     if( res.status === 200) {
+                        var review_today = res.data['num'];
+
+                        if( total - review_today < 0)
+                            this.remain = 0;
+                        else
+                            this.remain = total - review_today;
+
+                      } else {
+                          this.remain = total;
+                      }
+                  })
+                  .catch( (err) => {
+                      throw err;
+                  })
+
+            } else{
+              throw new Error();
+            }
+          })
+          .catch( (err) => {
+              this.$message({
+                type:'error', duration: 1500, message: '获取信息失败，请检查网络连接'
+              })
+          });
+
+
+
+      },
+      startReview(){
+        if( this.plan === null || this.plan === undefined || this.plan === ''){
+          this.$message({
+            type: 'info', duration: 1500, message: "请先选择要复习的计划本"
+          });
+          return;
+        }
+
+        this.loading = true;
+        const info = {
+            progress: this.plan.progress,
+                 num: 20,
+             collect: this.plan.collect,
+             account: localStorage.getItem('account'),
+          collect_id: this.plan.collect_id
+        };
+
+        Axios.post(getApiPath('/review/wordList'), info)
           .then( (res) => {
             if( res.status === 200 ){
               this.wordList = res.data['wordList'];
+              if( this.wordList.length === 0 ){
+                this.$message({
+                  type: 'info', duration: 1500, message: '该计划暂时没有需要复习的内容，先去背诵吧~'
+                });
+                return;
+              }
 
               this.current_index = 0;
-              this.loading = false;
-
               this.getPh();
               this.getFavorited();
               this.start_review = true;
+
+              this.loading = false;
+              this.show_circle = true;
+              this.handleCircle();
 
             } else{
               throw new Error();
@@ -327,34 +411,36 @@
           });
       },
 
+      handleDontKnow(){
+        this.show_circle=false;
+        if( this.timer !== null && this.timer !==  undefined)
+          clearInterval(this.timer);
+      },
       handleDelete( ){
         this.handleNext(true);
       },
       handleNext( isDelete ){
-        if(this.isRandom){
-          this.current_index++;
-          if( this.current_index !== this.wordList.length){
-            this.getPh();
-            this.getFavorited();
-          }
-
-        } else{
           var info = {
-            collect_id: this.plan.collect_id,
-            word: this.wordList[this.current_index]['word'],
+             collect_id: this.plan.collect_id,
+                   word: this.wordList[this.current_index]['word'],
             recent_time: moment(new Date()).format('YYYY-MM-DD'),
-            is_finish: isDelete,
-            account: localStorage.getItem('account')
+              is_finish: isDelete,
+                account: localStorage.getItem('account')
           };
-          Axios.post(getApiPath('/recite/word_recite_record'), info)
+          Axios.post(getApiPath('/review/word_recite_record'), info)
             .then( ( res ) => {
               if( res.status === 200 ){
                 this.current_index++;
                 if( this.current_index !== this.wordList.length){
+
+                  this.show_circle = true;
+                  if( this.timer !== null && this.timer !==  undefined)
+                    clearInterval(this.timer);
+
+                  this.handleCircle();
                   this.getPh();
                   this.getFavorited();
                 }
-
               } else{
                 throw new Error();
               }
@@ -364,49 +450,23 @@
                 type: 'error', duration: 1500, message: '背诵记录提交失败'
               });
             });
-        }
       },
-      finish_recite(){
-        localStorage.setItem('path', '/recite');
-        localStorage.setItem('path_name', 'recite');
+      finish_review(){
+        localStorage.setItem('path', '/review');
+        localStorage.setItem('path_name', 'review');
 
-        //如果是随机状态，在背诵完成后将该背诵记录插入到RandomNum表中，插入时要检测是否已经插入。已经插入则是更新
-        if( this.isRandom ){
           var info = {
             user_id: localStorage.getItem('user_id'),
-            date: moment(new Date()).format('YYYY-MM-DD'),
-            random_num: this.wordList.length
-          };
-          Axios.post(getApiPath('/recite/record_random_trace'), info)
-            .then( ( res )=>　{
-              if(res.status === 200){
-                this.$message({
-                  type: 'success', duration: 1500, message: '背诵记录保存成功'
-                });
-
-              } else {
-                throw new Error();
-              }
-            })
-            .catch( (err) => {
-              this.$message({
-                type: 'error', duration: 1500, message: '背诵记录保存失败'
-              });
-            });
-        }
-        else{
-          var info = {
-            user_id: localStorage.getItem('user_id'),
-            date: moment(new Date()).format('YYYY-MM-DD'),
-            number: this.wordList.length,
+               date: moment(new Date()).format('YYYY-MM-DD'),
+             number: this.wordList.length,
             plan_id: this.plan.plan_id
-
           };
-          Axios.post(getApiPath('/recite/record_plan_trace'), info)
+
+          Axios.post(getApiPath('/review/record_plan_trace'), info)
             .then( ( res )=>　{
               if(res.status === 200){
                 this.$message({
-                  type: 'success', duration: 1500, message: '背诵记录保存成功'
+                  type: 'success', duration: 1500, message: '复习记录保存成功'
                 });
 
               } else {
@@ -415,15 +475,14 @@
             })
             .catch( (err) => {
               this.$message({
-                type: 'error', duration: 1500, message: '背诵记录保存失败'
+                type: 'error', duration: 1500, message: '复习记录保存失败'
               });
             });
-        }
 
-        this.$router.replace({
-          path: '/empty',
-          name: 'empty'
-        });
+          this.$router.replace({
+            path: '/empty',
+            name: 'empty'
+          });
       },
     },
     updated(){
@@ -483,6 +542,23 @@
     transform: scale(10);
     color: #67C23A;
     display: block;
+  }
+
+  div.card{
+    display: inline-block;
+    width: 25%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    text-align: center;
+    margin: 0 15px;
+  }
+  div.header {
+    background-color: #51A8DD;
+    color: white;
+    padding: 10px;
+    font-size: 45px;
+  }
+  div.container {
+    padding: 10px;
   }
 
 </style>

@@ -2,26 +2,11 @@
   <div class="recite">
     <div class="my-card">
 
+      <!--准备界面-->
       <template v-if=" !start_recite ">
-        <div style="text-align: center">
-          <div class="card">
-            <div class="header">
-              <h1>{{ left_days }}</h1>
-            </div>
-            <div class="container">
-              <p>剩余天数</p>
-            </div>
-          </div>​
-          <div class="card">
-            <div class="header">
-              <h1>{{ today_words }}</h1>
-            </div>
-            <div class="container">
-              <p>今日剩余单词数</p>
-            </div>
-          </div>​
+        <div style="text-align: center; margin-top: 40px;">
           <div class="my-class">
-            <p>如果没有选择计划也可以开始背单词，但是不会有记录</p>
+            <p>选择单词本，随机出100道题</p>
             <el-select v-model="plan_id" placeholder="选择计划本" style="display: block" @change="handleChange">
               <el-option
                 v-for="(item, index) in tableData"
@@ -31,11 +16,21 @@
               >
               </el-option>
             </el-select>
-            <el-button type="primary" style="margin-top: 30px; width: 100%" @click=" startRecite ">开始背单词</el-button>
+            <el-select v-model="numOfQuestions" placeholder="选择测试单词数" style="display: block; margin-top: 20px;">
+              <el-option
+                v-for="(item, index) in tableData"
+                :key="item.plan_id"
+                :label=" item.plan_id + '.   ' + item.collect  + '   ' + item.progress + '/' + item.total "
+                :value="item.plan_id"
+              >
+              </el-option>
+            </el-select>
+            <el-button type="primary" style="margin-top: 20px; width: 100%" @click=" startExam ">开始背单词</el-button>
           </div>
         </div>
       </template>
 
+      <!--测试页面-->
       <template v-if=" start_recite && wordList.length !== current_index ">
         <el-card class="box-card"
                  v-loading="loading"
@@ -92,46 +87,16 @@
             </el-table>
           </div>
 
-          <!--单词意思-->
-          <div style="height: 260px" v-if="true">
-            <div style="float: top; position: relative; top: 45%;">
-              <span style="font-size: 2em">{{ wordList[current_index]['meaning'] }} </span>
-            </div>
-          </div>
-          <!--转圈圈-->
-          <div style="height: 260px" v-if="false">
-            <el-progress
-              :show-text="false"
-              style="margin: auto 0; top: 20%; zoom: 1.2"
-              type="circle"
-              :percentage="testNum">
-            </el-progress>
-          </div>
-
-          <!--<el-button type="success" icon="el-icon-search" @click="handleClick"></el-button>-->
-
-          <!--按钮-->
-          <div class="clearfix" style="margin-top: 20px">
-            <template v-if="true">
-              <el-button type="info" style="width: 100%" @click="handleNext(false)">下一个</el-button>
-            </template>
-            <template v-else>
-              <el-button type="primary" plain style="width: 45%; display: inline-block">认识</el-button>
-              <el-button type="info" plain style="width: 45%; display: inline-block">不认识</el-button>
-            </template>
-          </div>
-
           <!--四个选项-->
           <div style="margin-top: 20px; zoom: 1.3">
             <el-button type="primary" icon="el-icon-edit" @click="checkSpell"></el-button>
             <el-button type="success" icon="el-icon-search" @click="getDictHtml"></el-button>
             <el-button type="warning" icon="el-icon-star-off" :disabled="favorited" @click="handleFavorite"></el-button>
-            <el-button type="danger" icon="el-icon-delete" @click="handleDelete"></el-button>
           </div>
-
         </el-card>
       </template>
 
+      <!--测试结果-->
       <template v-if=" wordList.length === current_index && current_index !== 0">
         <div style="margin-top: 60px">
           <div>
@@ -166,6 +131,9 @@
         tableData: [ ],
         current_index: 0,
         start_recite: false,
+
+        numOptions: [20, 40, 60, 80, 100],
+        numOfQuestions: 0,
 
         options: [],
         wordList: [],
@@ -270,7 +238,7 @@
         }
         return 0;
       },
-      startReview(){
+      startExam(){
         this.loading = true;
         if(this.isRandom){
           this.initiateRandomWordList('/recite/random/20');
