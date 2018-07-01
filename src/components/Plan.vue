@@ -55,7 +55,7 @@
        </template>
 
       <template>
-        <el-dialog :title=" edit?'编辑计划':'新建计划'" :visible.sync="dialogFormVisible">
+        <el-dialog width="40%" :title=" edit?'编辑计划':'新建计划'" :visible.sync="dialogFormVisible">
           <el-form :model="form" :rules="rules" ref="planForm">
             <el-form-item label="起始日期" :label-width="formLabelWidth" prop="start_date">
               <el-date-picker v-model="form.start_date"
@@ -107,7 +107,6 @@
 </template>
 
 <script>
-  import format from 'date-format';
   import validate_login from "../utils/valiLogin";
   import Axios from 'axios';
   import getApiPath from "../utils/getApiPath";
