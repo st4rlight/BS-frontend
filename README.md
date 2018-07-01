@@ -3,7 +3,9 @@ https://github.com/st4rlight/BS-backend
 
 ## 技术栈
 Vue全家桶 （ Vue.js + Vue-Router + Vuex +　Axios ），使用Vue-Cli构建
+
 Element-UI
+
 V-Charts
 
 ## 运行
