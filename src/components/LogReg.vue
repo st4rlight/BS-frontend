@@ -5,7 +5,7 @@
           <el-col>
             <el-card :body-style="{ padding: '0px' }">
               <div id="slogan">
-                <img src="../assets/slogan2.jpg" class="image">
+                <img src="https://ws1.sinaimg.cn/large/006uM1SFgy1fsuvlmc2xlj318g18fq4u.jpg" class="image">
               </div>
             </el-card>
           </el-col>

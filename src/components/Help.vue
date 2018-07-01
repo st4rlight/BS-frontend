@@ -1,6 +1,6 @@
 <template>
   <div class="help">
-      <img class="logo" src="../assets/mylogo.jpg">
+      <img class="logo" src="https://ws1.sinaimg.cn/large/006uM1SFgy1fsuvmegwllj30cr0crt9a.jpg">
     <h3>Hi, I'm st4rlight</h3>
       <p><em>a student of ZhengJiang University</em></p>
     <br />

@@ -77,7 +77,7 @@
         <el-menu-item index="">
           <el-dropdown @command="handleCommand">
             <span class="el-dropdown-link" style="font-size: 1.2em; margin-left: 10px">
-              <img src="../assets/mylogo.jpg" style="height: 48px; margin-right: 10px">
+              <img src="https://ws1.sinaimg.cn/large/006uM1SFgy1fsuvmegwllj30cr0crt9a.jpg" style="height: 48px; margin-right: 10px">
              {{ getAccount }}<i class="el-icon-arrow-down el-icon--right"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
