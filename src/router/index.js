@@ -1,17 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Home from '@/components/Home'
-import LogReg from '@/components/LogReg'
-import Login from '@/components/Login'
-import Reg from '@/components/Reg'
-import Plan from '@/components/Plan'
-import Recite from '@/components/Recite'
-import Review from '@/components/Review'
-import Exam from '@/components/Exam'
-import Personal from '@/components/Personal'
-import Favorite from '@/components/Favorite'
-import Help from '@/components/Help'
-import Empty from '@/components/Empty'
 
 Vue.use(Router);
 
@@ -24,62 +12,62 @@ export default new Router({
     {
       path: '/home',
       name: 'home',
-      component: Home
+      component: resolve => require(['./../components/Home'], resolve)
     },
     {
       path: '/plan',
       name: 'plan',
-      component: Plan
+      component: resolve => require(['./../components/Plan'], resolve)
     },
     {
       path: '/recite',
       name: 'recite',
-      component: Recite
+      component: resolve => require(['./../components/Recite'], resolve)
     },
     {
       path: '/review',
       name: 'review',
-      component: Review
+      component: resolve => require(['./../components/Review'], resolve)
     },
     {
       path: '/exam',
       name: 'exam',
-      component: Exam
+      component: resolve => require(['./../components/Exam'], resolve)
     },
     {
       path: '/personal',
       name: 'personal',
-      component: Personal
+      component: resolve => require(['./../components/Personal'], resolve)
     },
     {
       path: '/favorite',
       name: 'favorite',
-      component: Favorite
+      component: resolve => require(['./../components/Favorite'], resolve)
     },
     {
       path: '/help',
       name: 'help',
-      component: Help
+      component: resolve => require(['./../components/Help'], resolve)
     },
     {
       path: '/empty',
       name: 'empty',
-      component: Empty
+      component: resolve => require(['./../components/Empty'], resolve)
     },
     {
       path: '/log_reg',
       name: 'log_reg',
-      component: LogReg,
+      component: resolve => require(['./../components/LogReg'], resolve),
       children: [
         {
           path: 'login',
           name: 'login',
-          component: Login
+          component: resolve => require(['./../components/Login'], resolve),
         },
         {
           path: 'reg',
           name: 'reg',
-          component: Reg
+          component: resolve => require(['./../components/Reg'], resolve),
         },
 
       ]
