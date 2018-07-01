@@ -33,7 +33,7 @@
           <i class="el-icon-edit-outline"></i>
           <span slot="title">考核</span>
         </el-menu-item>
-        <el-menu-item index="/personal">
+        <el-menu-item index="/personal" disabled>
           <i class="el-icon-setting"></i>
           <span slot="title">自定义</span>
         </el-menu-item>

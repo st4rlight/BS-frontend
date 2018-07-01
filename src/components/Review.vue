@@ -329,7 +329,9 @@
         Axios.get(getApiPath('/recite/getHtml/' + word))
           .then( (res) => {
             this.$alert( res.data['rawHtml'], '有道词典', {
-              dangerouslyUseHTMLString: true
+              dangerouslyUseHTMLString: true,
+              confirmButtonText: '确定',
+              callback: action => {}
             });
           })
           .catch( (err) => {

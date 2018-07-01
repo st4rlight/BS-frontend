@@ -278,7 +278,9 @@
           Axios.get(getApiPath('/recite/getHtml/' + word))
               .then( (res) => {
                 this.$alert( res.data['rawHtml'], '有道词典', {
-                  dangerouslyUseHTMLString: true
+                  dangerouslyUseHTMLString: true,
+                  confirmButtonText: '确定',
+                  callback: action => {}
                 });
               })
               .catch( (err) => {
@@ -412,6 +414,7 @@
             document.getElementById(id).play();
         },
         finish_recite(){
+          return;
           localStorage.setItem('path', '/recite');
           localStorage.setItem('path_name', 'recite');
 

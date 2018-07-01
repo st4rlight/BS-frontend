@@ -3,35 +3,41 @@
     <div class="my-card">
 
       <!--准备界面-->
-      <template v-if=" !start_recite ">
+      <template v-if=" !start_exam ">
         <div style="text-align: center; margin-top: 40px;">
           <div class="my-class">
-            <p>选择单词本，随机出100道题</p>
-            <el-select v-model="plan_id" placeholder="选择计划本" style="display: block" @change="handleChange">
+
+            <p>选择单词本，随机出 {{ numOfQuestions }} 道题</p>
+
+            <!--选择单词本-->
+            <el-select v-model="collect" placeholder="选择要测验的单词本" style="display: block">
               <el-option
-                v-for="(item, index) in tableData"
-                :key="item.plan_id"
-                :label=" item.plan_id + '.   ' + item.collect  + '   ' + item.progress + '/' + item.total "
-                :value="item.plan_id"
+                v-for="(item, index) in collections"
+                :key="index"
+                :label="item.collect"
+                :value="item"
               >
               </el-option>
             </el-select>
+
+            <!--选择试题个数-->
             <el-select v-model="numOfQuestions" placeholder="选择测试单词数" style="display: block; margin-top: 20px;">
               <el-option
-                v-for="(item, index) in tableData"
-                :key="item.plan_id"
-                :label=" item.plan_id + '.   ' + item.collect  + '   ' + item.progress + '/' + item.total "
-                :value="item.plan_id"
+                v-for="(item, index) in numOptions"
+                :key="index"
+                :label="item"
+                :value="item"
               >
               </el-option>
             </el-select>
-            <el-button type="primary" style="margin-top: 20px; width: 100%" @click=" startExam ">开始背单词</el-button>
+
+            <el-button type="primary" style="margin-top: 20px; width: 100%" @click=" startExam ">开始测试</el-button>
           </div>
         </div>
       </template>
 
-      <!--测试页面-->
-      <template v-if=" start_recite && wordList.length !== current_index ">
+      <!--单词页面-->
+      <template v-if=" start_exam && wordList.length !== current_index ">
         <el-card class="box-card"
                  v-loading="loading"
                  element-loading-text="拼命加载中"
@@ -60,34 +66,25 @@
           </div>
 
           <!--四个选择-->
-          <div v-if="false">
+          <div>
             <el-table
-              :data="options"
-              style="width: 100%;"
+              :data="choices"
+              style="width: 100%; cursor: pointer"
               :show-header="false"
-              class="my-choices">
+              class="my-choices"
+              @row-click="handleSelect">
               <el-table-column
-                align="right"
-                prop="value"
-                label="选项号">
-                <template slot-scope="scope">
-                  <el-tag type="info" style="font-size: 1.2em" plain>{{ scope.row.value }}</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column width="80px">
-              </el-table-column>
-              <el-table-column
-                align="left"
+                align="center"
                 prop="label"
                 label="选项">
                 <template slot-scope="scope">
-                  <span style="font-size: 1.3em"> {{ scope.row.label }}</span>
+                  <span style="font-size: 1.3em"> {{ scope.row.meaning }}</span>
                 </template>
               </el-table-column>
             </el-table>
           </div>
 
-          <!--四个选项-->
+          <!--底栏3个图标-->
           <div style="margin-top: 20px; zoom: 1.3">
             <el-button type="primary" icon="el-icon-edit" @click="checkSpell"></el-button>
             <el-button type="success" icon="el-icon-search" @click="getDictHtml"></el-button>
@@ -98,13 +95,79 @@
 
       <!--测试结果-->
       <template v-if=" wordList.length === current_index && current_index !== 0">
-        <div style="margin-top: 60px">
-          <div>
-            <i class="el-icon-success finish_icon"></i>
+        <div class="card">
+          <div class="right">
+
+            <el-popover
+              placement="right"
+              width="600"
+              trigger="click">
+              <el-pagination
+                @size-change="handleSizeChange1"
+                @current-change="handleCurrentChange1"
+                :current-page="current_page1"
+                :page-sizes="[5, 10, 15, 20]"
+                :page-size="pageSize1"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="rightAnswer.length">
+              </el-pagination>
+              <el-table :data="rightAnswer.slice((current_page1-1)*pageSize1,current_page1 * pageSize1)">
+                <el-table-column property="word" label="单词"></el-table-column>
+                <el-table-column property="meaning" label="意思">
+                  <template slot-scope="scope">
+                    <el-tag type="success" style="zoom: 1.2">{{ scope.row.meaning }}</el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <h1 slot="reference" style="cursor:pointer;">{{ this.rightAnswer.length }}</h1>
+            </el-popover>
           </div>
-          <br /><br /><br /><br />
-          <p style="font-size: 2em">恭喜，背诵完成~</p>
-          <el-button type="primary" style="width: 200px" @click="finish_recite">完成</el-button>
+          <div class="container">
+            <p>正确数</p>
+          </div>
+
+        </div>​
+        <div class="card">
+          <div class="wrong">
+            <el-popover
+              placement="left"
+              width="600"
+              trigger="click">
+              <el-pagination
+                @size-change="handleSizeChange2"
+                @current-change="handleCurrentChange2"
+                :current-page="current_page2"
+                :page-sizes="[5, 10, 15, 20]"
+                :page-size="pageSize2"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="wrongAnswer.length">
+              </el-pagination>
+              <el-table :data="wrongAnswer.slice((current_page2-1)*pageSize2,current_page2 * pageSize2)">
+                <el-table-column property="word" label="单词"></el-table-column>
+                <el-table-column property="meaning" label="意思">
+                  <template slot-scope="scope">
+                    <el-tag type="success" style="zoom: 1.2">{{ scope.row.meaning }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column property="wrong" label="错选">
+                  <template slot-scope="scope2">
+                    <el-tag type="danger" style="zoom: 1.2">{{ scope2.row.wrong }}</el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <h1 slot="reference" style="cursor:pointer;">{{ this.wrongAnswer.length }}</h1>
+            </el-popover>
+          </div>
+          <div class="container">
+            <p>错误数</p>
+          </div>
+        </div>​
+
+        <div style="margin-top: 60px">
+          <p style="font-size: 1.5em">总数 <el-tag type="primary" style="zoom: 1.5">{{ this.wordList.length }}</el-tag></p>
+          <p>点击上面的数字可以查看具体对错</p>
+          <br />
+          <el-button type="primary" style="width: 250px" @click="finish_exam">完成</el-button>
         </div>
       </template>
 
@@ -126,141 +189,139 @@
     name: "exam",
     data: function(){
       return{
-        testNum: 0,
-        isRandom: true, //是否随机背
-        tableData: [ ],
-        current_index: 0,
-        start_recite: false,
+        rightData: [],
+        wrongData: [],
+        pageSize1: 5,
+        pageSize2: 5,
+        current_page1: 1,
+        current_page2: 1,
+
 
         numOptions: [20, 40, 60, 80, 100],
-        numOfQuestions: 0,
+        numOfQuestions: 20,
 
-        options: [],
+        collections: JSON.parse(localStorage.getItem('collections')),
+            collect: '',
+
+         choices: [],
         wordList: [],
-        plan_id: '',
-        left_days: 0,
-        today_words: 0,
-        plan: null, //保存当前背诵的计划的信息
+        rightAnswer: [],
+        wrongAnswer: [],
+        current_index: 0,
 
+        start_exam: false,
         favorited: false,
         loading: false,
+        should_play: false,
+
         ph_en: '',
         ph_am: '',
         ph_en_mp3: null,
-        ph_am_mp3: null,
-
-        should_play: false
+        ph_am_mp3: null
       }
     },
-    beforeMount(){
-      validate_login(this);
-
-      Axios.get(getApiPath('/plan/allPlans/' + localStorage.getItem('user_id') ))
-        .then( (res) => {
-          if( res.status === 200) {
-            this.tableData = res.data['tableData'];
-          } else {
-            throw new Error();
-          }
-        })
-        .catch( (err) => {
-          this.$message({
-            type: 'error',
-            duration: 1500,
-            message: '获取计划失败'
-          })
-        });
-    },
     methods: {
-      handleClick(){
-        var timer = setInterval(() => {
-          this.testNum += 1;
-          if(this.testNum === 100) {
-            clearTimeout(timer);
-          }
-        }, 50);
+      handleIndex(index){
+          var arr = ['A','B','C','D','E','F','G','H'];
+          return arr[index];
       },
-      handleChange(plan_id){
-        for( let item of this.tableData ){
-          if( item.plan_id = plan_id ){
-            this.plan = item;
-            this.isRandom = false;
-            break;
-          }
+
+      startExam(){
+        if( this.collect === null || this.collect === undefined || this.collect === ''){
+          this.$message({
+            type: 'info', duration: 1500, message: "请先选择要测试的单词本"
+          });
+          return;
         }
 
-        this.left_days = this.getLeftDays( this.plan.end_date );
-        var total_days = this.getTotalDays( this.plan.start_date, this.plan.end_date);
-
+        this.loading = true;
         const info = {
-          plan_id: plan_id,
-          date: moment(new Date()).format('YYYY-MM-DD')
+            collect: this.collect.collect,
+             number: this.numOfQuestions
         };
 
-        Axios.post( getApiPath('/recite/plan_recite_num'), info)
+        Axios.post(getApiPath('/exam/wordList'), info)
           .then( (res) => {
-            if( res.status === 200){
-              this.today_words = Math.ceil( this.plan.total / total_days ) - res.data['count'];
-              if(this.today_words < 0)
-                this.today_words = 0;
+            if( res.status === 200 ){
+              this.wordList = res.data['wordList'];
+
+              if( this.wordList.length === 0 ){
+                throw new Error();
+              }
+
+              this.current_index = 0;
+              this.getPh();
+              this.getFavorited();
+              this.prepareChoices(3);
+
+              this.start_exam = true;
+              this.loading = false;
 
             } else{
               throw new Error();
             }
           })
           .catch( (err) => {
-            this.today_words = Math.ceil( this.plan.total / total_days );
+            this.$message({
+              type: 'error',
+              duration: 1500,
+              message: '获取单词信息失败，请检查网络连接'
+            });
+            this.loading = false;
           });
 
       },
-      getLeftDays: function( end_date ){
-        if( end_date !== "" && end_date !== null && end_date !== undefined){
-          var s2 = new Date( end_date );
-          var now = new Date();
-          var leftTime = s2.getTime() - now.getTime();
-          var leftDays = Math.ceil(leftTime / (1000 * 60 * 60 * 24));
-
-          return ( leftDays + 1 );
-        }
-        return 0;
-      },
-      getTotalDays: function( start_date, end_date ){
-        if( start_date !== "" && start_date !== null && start_date !== undefined){
-          var s1 = new Date( start_date );
-
-          if( end_date !== "" && end_date !== null && end_date !== undefined){
-            var s2 = new Date(end_date );
-            var totalTime = s2.getTime() - s1.getTime();
-            var totalDays = Math.ceil(totalTime / (1000 * 60 * 60 * 24));
-
-            return ( totalDays + 1);
-          }
-        }
-        return 0;
-      },
-      startExam(){
-        this.loading = true;
-        if(this.isRandom){
-          this.initiateRandomWordList('/recite/random/20');
-        }
+      handleSelect(row, event, column){
+        if( row.word === this.wordList[this.current_index].word)
+          this.rightAnswer.push( JSON.parse(JSON.stringify(row)) );
         else{
-          var num = ( this.today_words < 20) ? this.today_words : 20;
-          if( num === 0){
-            this.$confirm('您已经完成了该计划今日的任务，再来20个?', '提示', {
-              confirmButtonText: '确定',
-              cancelButtonText: '取消',
-              type: 'info'
-            })
-              .then(() => {
-                this.initiateWordList();
-              })
-              .catch(() => {});
+          var right_word = this.wordList[this.current_index];
 
-          } else{
-            this.initiateWordList();
-          }
+          var temp = JSON.stringify({
+                 id:  right_word.id,
+               word:  right_word.word,
+            meaning:  right_word.meaning,
+              wrong:  row.meaning
+          });
+
+          this.wrongAnswer.push( (JSON.parse( temp) ));
+        }
+
+        this.current_index++;
+        if( this.current_index !== this.wordList.length){
+          this.getPh();
+          this.getFavorited();
+          this.prepareChoices(3);
+
+        } else{
+
+          //背诵完毕，保存记录
+          var info = {
+               user_id: localStorage.getItem('user_id'),
+            collect_id: this.collect.collect_id,
+             total_num: this.wordList.length,
+             right_num: this.rightAnswer.length,
+             wrong_num: this.wrongAnswer.length,
+          };
+          Axios.post(getApiPath('/exam/record_exam_trace'), info)
+            .then( ( res )=>　{
+              if(res.status === 200){
+                this.$message({
+                  type: 'success', duration: 1500, message: '测试记录保存成功'
+                });
+
+              } else {
+                throw new Error();
+              }
+            })
+            .catch( (err) => {
+              this.$message({
+                type: 'error', duration: 1500, message: '测试记录保存失败'
+              });
+            });
         }
       },
+
       getPh(){
         this.loading = true;
         var word = this.wordList[this.current_index]['word'];
@@ -285,13 +346,15 @@
             this.loading = false;
           });
       },
-
       getDictHtml(){
         var word = this.wordList[this.current_index]['word'];
         Axios.get(getApiPath('/recite/getHtml/' + word))
           .then( (res) => {
             this.$alert( res.data['rawHtml'], '有道词典', {
-              dangerouslyUseHTMLString: true
+              dangerouslyUseHTMLString: true,
+              confirmButtonText: '确定',
+              callback: action => {}
+
             });
           })
           .catch( (err) => {
@@ -372,51 +435,35 @@
             this.favorited = false;
           });
       },
+      prepareChoices( num ){
+        var info = {
+              index: this.wordList[this.current_index].id,
+            collect: this.collect.collect,
+             number: num
+        };
 
-      handleNext( isDelete ){
-        if(this.isRandom){
-          this.current_index++;
-          if( this.current_index !== this.wordList.length){
-            this.getPh();
-            this.getFavorited();
-          }
+        Axios.post(getApiPath('/exam/wrongChoices'), info)
+            .then( (res) => {
+                if( res.status === 200 ){
+                    this.choices = res.data['choices'];
+                    var rightPosition = parseInt( Math.random() * ( num + 1));
+                    this.choices.splice(rightPosition, 0 , this.wordList[this.current_index]);
 
-        } else{
-          var info = {
-            collect_id: this.plan.collect_id,
-            word: this.wordList[this.current_index]['word'],
-            recent_time: moment(new Date()).format('YYYY-MM-DD'),
-            is_finish: isDelete,
-            account: localStorage.getItem('account')
-          };
-          Axios.post(getApiPath('/recite/word_recite_record'), info)
-            .then( ( res ) => {
-              if( res.status === 200 ){
-                this.current_index++;
-                if( this.current_index !== this.wordList.length){
-                  this.getPh();
-                  this.getFavorited();
+                } else{
+                    throw new Error();
                 }
-
-              } else{
-                throw new Error();
-              }
             })
-            .catch( ( err ) => {
-              this.$message({
-                type: 'error', duration: 1500, message: '背诵记录提交失败'
-              });
+            .catch( (err) => {
+                this.$message({
+                      type: 'error',
+                  duration: 1500,
+                   message: '获取试题失败.请检查网络连接'
+                });
             });
-        }
-      },
-      handleDelete(){
-        if( this.isRandom ){
-          this.handleNext( false );
 
-        } else {
-          this.handleNext( true )
-        }
+
       },
+
       playSound( id ){
         if( id === 'ph_en' && (this.ph_en_mp3 === null || this.ph_en_mp3 === undefined ))
           return;
@@ -424,59 +471,9 @@
           return;
         document.getElementById(id).play();
       },
-      finish_recite(){
-        localStorage.setItem('path', '/recite');
-        localStorage.setItem('path_name', 'recite');
-
-        //如果是随机状态，在背诵完成后将该背诵记录插入到RandomNum表中，插入时要检测是否已经插入。已经插入则是更新
-        if( this.isRandom ){
-          var info = {
-            user_id: localStorage.getItem('user_id'),
-            date: moment(new Date()).format('YYYY-MM-DD'),
-            random_num: this.wordList.length
-          };
-          Axios.post(getApiPath('/recite/record_random_trace'), info)
-            .then( ( res )=>　{
-              if(res.status === 200){
-                this.$message({
-                  type: 'success', duration: 1500, message: '背诵记录保存成功'
-                });
-
-              } else {
-                throw new Error();
-              }
-            })
-            .catch( (err) => {
-              this.$message({
-                type: 'error', duration: 1500, message: '背诵记录保存失败'
-              });
-            });
-        }
-        else{
-          var info = {
-            user_id: localStorage.getItem('user_id'),
-            date: moment(new Date()).format('YYYY-MM-DD'),
-            number: this.wordList.length,
-            plan_id: this.plan.plan_id
-
-          };
-          Axios.post(getApiPath('/recite/record_plan_trace'), info)
-            .then( ( res )=>　{
-              if(res.status === 200){
-                this.$message({
-                  type: 'success', duration: 1500, message: '背诵记录保存成功'
-                });
-
-              } else {
-                throw new Error();
-              }
-            })
-            .catch( (err) => {
-              this.$message({
-                type: 'error', duration: 1500, message: '背诵记录保存失败'
-              });
-            });
-        }
+      finish_exam(){
+        localStorage.setItem('path', '/exam');
+        localStorage.setItem('path_name', 'exam');
 
         this.$router.replace({
           path: '/empty',
@@ -484,65 +481,22 @@
         });
       },
 
-
-      initiateRandomWordList( path ){
-        Axios.get(getApiPath( path ))
-          .then( (res) => {
-            if( res.status === 200 ){
-              this.wordList = res.data['wordList'];
-              this.current_index = 0;
-              this.loading = false;
-
-              this.getPh();
-              this.getFavorited();
-              this.start_recite = true;
-
-            } else{
-              throw new Error();
-            }
-          })
-          .catch( (err) => {
-            this.$message({
-              type: 'error',
-              duration: 1500,
-              message: '获取单词信息失败，请检查网络连接'
-            });
-            this.loading = false;
-          });
+      //used for paging
+      handleSizeChange1: function (size) {
+        this.pageSize1 = size;
       },
-      initiateWordList( ){
-        const info = {
-          progress: this.plan.progress,
-          num: 20,
-          collect: this.plan.collect
-        };
-
-        Axios.post(getApiPath('/recite/recite_plan'), info)
-          .then( (res) => {
-            if( res.status === 200 ){
-              this.wordList = res.data['wordList'];
-
-              this.current_index = 0;
-              this.loading = false;
-
-              this.getPh();
-              this.getFavorited();
-              this.start_recite = true;
-
-            } else{
-              throw new Error();
-            }
-          })
-          .catch( (err) => {
-            this.$message({
-              type: 'error',
-              duration: 1500,
-              message: '获取单词信息失败，请检查网络连接'
-            });
-            this.loading = false;
-          });
+      handleCurrentChange1: function(currentPage){
+        this.current_page1 = currentPage;
+      },
+      handleSizeChange2: function (size) {
+        this.pageSize2 = size;
+      },
+      handleCurrentChange2: function(currentPage){
+        this.current_page2 = currentPage;
       }
+
     },
+
     updated(){
       if(this.should_play) {
         if (this.ph_am_mp3 !== null && this.ph_am_mp3 !== undefined) {
@@ -552,6 +506,9 @@
         }
         this.should_play = false;
       }
+    },
+    beforeMount(){
+      validate_login(this);
     }
   }
 </script>
@@ -564,7 +521,7 @@
     width: 60%;
     text-align: center;
     display: inline-block;
-    margin-top: 80px;
+    margin-top: 60px;
     padding: 20px;
   }
 
@@ -621,10 +578,29 @@
     font-size: 20px;
     cursor: pointer;
   }
-  .finish_icon{
-    transform: scale(10);
-    color: #67C23A;
-    display: block;
+
+  div.card{
+    display: inline-block;
+    width: 25%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    text-align: center;
+    margin: 0 15px;
   }
+  div.right {
+    background-color: #67C23A;
+    color: white;
+    padding: 10px;
+    font-size: 45px;
+  }
+  div.wrong {
+    background-color: #F56C6C;
+    color: white;
+    padding: 10px;
+    font-size: 45px;
+  }
+  div.container {
+    padding: 10px;
+  }
+
 
 </style>
