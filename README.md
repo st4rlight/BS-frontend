@@ -1,5 +1,5 @@
 ## 后端地址
-https://github.com/st4rlight/BS-backend
+https://github.com/st4rlight/BS-rearend
 
 ## 技术栈
 Vue全家桶 （ Vue.js + Vue-Router + Vuex +　Axios ），使用Vue-Cli构建
